@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="freeBoard">
+	<!-- 메인 페이지 -->
+	<select id="freeBoardGetList" resultType="freeBoardDto"> <!-- resultType="ino.web.board.dto.BoardDto" -->
+      <include refid="paging_header" />
+		SELECT NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY-MM-DD') REGDATE, CONTENT FROM FREEBOARD
+		ORDER BY LPAD( NUM, 5 ) DESC
+      <include refid="paging_footer" />
+	</select>
+	
+	 <sql id="paging_header">
+		select *
+		from (
+		    select rownum as rn, A.* from (	
+	</sql>
+	<sql id="paging_footer">
+     	    ) A
+		) where rn between #{start} and #{end}	
+	</sql>
+	
+	
+	<!-- 레코드 갯수 계산 -->
+ 	<select id="countArticle" parameterType="map" resultType="int">		
+ 	 select count(*) from freeboard
+		<include refid="search" />
+	</select>
+	
+	<!-- 검색기능, sql태그는 다른 태그에 끼워넣을 수 있는 기능을 가지고 있음 -->
+  	<sql id="search">
+		<choose>
+			<when test="search_option == 'name'">
+				where  ${search_option} like #{keyword}			
+			</when>
+			 <otherwise>
+				where  	${search_option} 			           
+				        or  (title like #{keyword}
+				        or content like #{keyword})			
+			 </otherwise>
+		</choose>
+	</sql>
+	
+	
+	
+	<!-- 글쓰기(추가) -->
+	<insert id="freeBoardInsertPro" parameterType="freeBoardDto">
+	<selectKey keyProperty="num" resultType="int" order="BEFORE">
+        select FREEBOARDNUM_SEQ.nextval from dual
+    </selectKey>
+		INSERT INTO FREEBOARD(NUM, TITLE, NAME, REGDATE, CONTENT)
+		VALUES(#{num},#{title},#{name},SYSDATE,#{content})
+	</insert>
+   
+   
+   
+   <!-- 글 세부정보 -->
+	<select id="freeBoardDetailByNum" parameterType="int" resultType="freeBoardDto">
+		SELECT NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY-MM-DD') REGDATE, CONTENT FROM FREEBOARD
+		WHERE NUM=#{num}
+	</select>
+	
+	
+	
+	<!-- 글 수정 -->
+	<update id="freeBoardUpdate" parameterType="FreeBoardDto">
+	   update freeboard set name=#{name},content=#{content} where num=#{num}
+	</update>
+	
+	
+	
+	<!-- 글 삭제 -->
+	<delete id="freeBoardDelete" parameterType="int">
+	   delete from freeboard where num=#{num}
+	</delete>
+</mapper>
